@@ -15,11 +15,7 @@ define("robotTW2/databases/data_farm", [
 			notify,
 			helper
 	) {
-                               // 
-                               // 
-                               // 
-                               // 
-                               // 
+
 	var data_farm = database.get("data_farm")
 	, db_farm = {}
 	, presets_created = []
