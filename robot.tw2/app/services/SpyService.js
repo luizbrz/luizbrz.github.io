@@ -11,7 +11,9 @@ define("robotTW2/services/SpyService", [
 	"conf/spyTypes",
 	"robotTW2/databases/data_villages",
 	"robotTW2/databases/data_spy",
-	"robotTW2/CommandSpy"
+	"robotTW2/databases/data_log",
+	"robotTW2/CommandSpy",
+	"helper/format"
 	], function(
 			robotTW2,
 			time,
@@ -20,7 +22,9 @@ define("robotTW2/services/SpyService", [
 			SPY_TYPES,
 			data_villages,
 			data_spy,
-			commandSpy
+			data_log,
+			commandSpy,
+			formatHelper
 	){
 	return (function SpyService(
 			$rootScope,
@@ -28,6 +32,7 @@ define("robotTW2/services/SpyService", [
 			providers,
 			modelDataService,
 			$timeout,
+			$filter,
 			commandQueue,
 			ready,
 			loadScript,
@@ -71,7 +76,29 @@ define("robotTW2/services/SpyService", [
 		}
 		, recruit_spy = function (){
 			Object.keys(data_villages.villages).forEach(function(id){
-				var sec_promise = function (id){
+				var next_seq = function next_seq(){
+					$timeout(function(){
+						promise = undefined
+						if(isPaused){
+							typeof(listener_resume) == "function" ? listener_resume(): null;
+							listener_resume = undefined
+							listener_resume = $rootScope.$on(providers.eventTypeProvider.RESUME, function(){
+								if(queue.length){
+									sec_promise(queue.shift())
+								} else {
+									wait();
+								}
+							})
+						} else {
+							if(queue.length){
+								sec_promise(queue.shift())
+							} else {
+								wait();
+							}
+						}
+					}, 3000)
+				}
+				, sec_promise = function sec_promise(id){
 					if(!promise){
 						promise = new Promise(function(res, rej){
 							let selectedVillage = modelDataService.getSelectedCharacter().getVillage(id);
@@ -100,55 +127,23 @@ define("robotTW2/services/SpyService", [
 										list.push(spy.timeCompleted);
 									}
 									if ((spy.type === SPY_TYPES.NO_SPY) && spy.affordable) {
+
+										data_log.spy.push(
+												{
+													"text": $filter("i18n")("title", $rootScope.loc.ale, "spy") + " - " + formatHelper.villageNameWithCoordinates(selectedVillage.data),
+													"date": time.convertedTime()
+												}
+										)
+
 										socketService.emit(providers.routeProvider.SCOUTING_RECRUIT, {
 											'village_id'	: selectedVillage.getId(),
 											'slot'			: spy.id
 										});
 									};
 								}
-								$timeout(function(){
-									res()
-								}, 3000)
+								res()
 							}
-						}).then(function(){
-							promise = undefined
-							if(isPaused){
-								typeof(listener_resume) == "function" ? listener_resume(): null;
-								listener_resume = undefined
-								listener_resume = $rootScope.$on(providers.eventTypeProvider.RESUME, function(){
-									if(queue.length){
-										sec_promise(queue.shift())
-									} else {
-										wait();
-									}
-								})
-							} else {
-								if(queue.length){
-									sec_promise(queue.shift())
-								} else {
-									wait();
-								}
-							}
-						}, function(){
-							promise = undefined
-							if(isPaused){
-								typeof(listener_resume) == "function" ? listener_resume(): null;
-								listener_resume = undefined
-								listener_resume = $rootScope.$on(providers.eventTypeProvider.RESUME, function(){
-									if(queue.length){
-										sec_promise(queue.shift())
-									} else {
-										wait();
-									}
-								})
-							} else {
-								if(queue.length){
-									sec_promise(queue.shift())
-								} else {
-									wait();
-								}
-							}
-						})
+						}).then(next_seq, next_seq)
 
 					} else {
 						queue.push(id)
@@ -184,7 +179,7 @@ define("robotTW2/services/SpyService", [
 			if(!params){return}
 			!(typeof(listener) == "function") ? listener = $rootScope.$on(providers.eventTypeProvider.SCOUTING_SENT, listener_command_sent) : null;
 			var expires = params.data_escolhida - params.duration
-			, timer_delay = (expires - time.convertedTime()) + robotTW2.databases.data_main.time_correction_command
+			, timer_delay = (expires - time.convertedTime())
 			, id_command = (Math.round(time.convertedTime() + params.data_escolhida).toString());
 
 			if(opt_id){
@@ -258,7 +253,7 @@ define("robotTW2/services/SpyService", [
 		}
 		, resendAttackSpy = function(params){
 			var expires_send = params.data_escolhida - params.duration
-			, timer_delay_send = (expires_send - time.convertedTime()) + robotTW2.databases.data_main.time_correction_command;
+			, timer_delay_send = expires_send - time.convertedTime()
 
 			if(timer_delay_send < 0){
 				removeCommandAttackSpy(params.id_command)
@@ -402,7 +397,7 @@ define("robotTW2/services/SpyService", [
 			isPaused = !1
 			$rootScope.$broadcast(providers.eventTypeProvider.RESUME)
 		}
-		
+
 		return	{
 			init					: init,
 			start					: start,
@@ -429,6 +424,7 @@ define("robotTW2/services/SpyService", [
 			robotTW2.providers,
 			robotTW2.services.modelDataService,
 			robotTW2.services.$timeout,
+			robotTW2.services.$filter,
 			robotTW2.commandQueue,
 			robotTW2.ready,
 			robotTW2.loadScript,
