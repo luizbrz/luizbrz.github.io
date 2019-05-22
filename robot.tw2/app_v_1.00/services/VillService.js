@@ -40,7 +40,13 @@ define("robotTW2/services/VillService", [
 			case "recruit": 
 				str = "recruit_activate"
 					break;
-			default :
+			case "spy": 
+				str = undefined
+					break;
+			case "attack": 
+				str = undefined
+				break;
+			case "farm": 
 				str = undefined
 				break;
 			}
@@ -53,8 +59,7 @@ define("robotTW2/services/VillService", [
 					value 	: data_villages.villages[key][str] || data_villages.villages[key],
 					spies 	: vill.getScoutingInfo().getNumAvailableSpies(),
 					x		: vill.data.x,
-					y		: vill.data.y,
-					units	: vill.getUnitInfo().getUnits()
+					y		: vill.data.y
 				})
 				if(typeof(type_sort) == "string"){
 					local_data_villages.sort(function(a,b){return a[type_sort].localeCompare(b[type_sort])})
@@ -75,9 +80,9 @@ define("robotTW2/services/VillService", [
 		, stop = function (){
 			isRunning = !1;
 		}
-
+		
 		init()
-
+		
 		return	{
 			init			: init,
 			start 			: start,

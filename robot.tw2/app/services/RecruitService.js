@@ -4,16 +4,14 @@ define("robotTW2/services/RecruitService", [
 	"robotTW2/conf",
 	"robotTW2/databases/data_log",
 	"robotTW2/databases/data_recruit",
-	"robotTW2/databases/data_villages",
-	"helper/format"
+	"robotTW2/databases/data_villages"
 	], function(
 			robotTW2,
 			time,
 			conf,
 			data_log,
 			data_recruit,
-			data_villages,
-			formatHelper
+			data_villages
 	){
 	return (function FarmService(
 			$rootScope,
@@ -110,7 +108,7 @@ define("robotTW2/services/RecruitService", [
 								res()
 								return
 							};
-
+							
 							if(!Object.keys(listGroups).length){
 								res()
 								return
@@ -132,7 +130,7 @@ define("robotTW2/services/RecruitService", [
 								res()
 								return
 							}
-
+							
 							Object.keys(grs_units).map(function(gr){
 								let min_resources = Math.trunc(
 										Math.min.apply(null, [
@@ -161,7 +159,7 @@ define("robotTW2/services/RecruitService", [
 
 									if (remaining <= 0) {
 										return nt()
-
+										
 									};
 									if (amount > remaining) {
 										amount = remaining;
@@ -177,12 +175,7 @@ define("robotTW2/services/RecruitService", [
 											"amount": amount
 									}
 
-									data_log.recruit.push(
-											{
-												"text":$filter("i18n")("recruit", $rootScope.loc.ale, "recruit") + " " + formatHelper.villageNameWithCoordinates(modelDataService.getVillage(village_id).data) + " " + amount + " " + unit_type, 
-												"date": time.convertedTime()
-											}
-									)
+									data_log.recruit.push({"text":$filter("i18n")("recruit", $rootScope.loc.ale, "recruit") + " - village_id " + village_id + " / unit_type " + unit_type, "date": (new Date(time.convertedTime())).toString()})
 									socketService.emit(providers.routeProvider.BARRACKS_RECRUIT, data_rec);
 									res()
 								} else {
@@ -232,7 +225,7 @@ define("robotTW2/services/RecruitService", [
 						queue_UnitsAndResources.push(village_id);
 					}
 				}
-
+				
 				sec_promise(village_id)
 
 			})
@@ -275,11 +268,7 @@ define("robotTW2/services/RecruitService", [
 			if(callback && typeof(callback) == "function"){callback(t)}
 		}
 		, recruit = function(){
-			data_log.recruit.push({
-				"text":$filter("i18n")("init_cicles", $rootScope.loc.ale, "recruit"), 
-				"date": time.convertedTime()
-			}
-			)
+			data_log.recruit.push({"text":$filter("i18n")("init_cicles", $rootScope.loc.ale, "recruit"), "date": (new Date(time.convertedTime())).toString()})
 			var vls = modelDataService.getSelectedCharacter().getVillageList();
 			vls = Object.keys(vls).map(function(elem){
 				if(!data_villages.villages[vls[elem].getId()]){

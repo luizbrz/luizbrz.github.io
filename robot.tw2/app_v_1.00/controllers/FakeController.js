@@ -9,8 +9,7 @@ define("robotTW2/controllers/FakeController", [
 	"robotTW2/notify",
 	"helper/math",
 	"conf/conf",
-	"robotTW2/services/ProvinceService",
-	"robotTW2/unreadableSeconds"
+	"robotTW2/services/ProvinceService"
 	], function(
 			services,
 			providers,
@@ -22,8 +21,7 @@ define("robotTW2/controllers/FakeController", [
 			notify,
 			math,
 			conf_conf,
-			provinceService,
-			unreadableSeconds
+			provinceService
 	){
 	return function FakeController($scope) {
 		$scope.CLOSE = services.$filter("i18n")("CLOSE", services.$rootScope.loc.ale);
@@ -67,9 +65,9 @@ define("robotTW2/controllers/FakeController", [
 		, updateValues = function(){
 			if(Object.keys($scope.send_scope).length){
 				let durationInSeconds = $scope.send_scope.distance / services.modelDataService.getWorldConfig().getSpeed() * services.modelDataService.getGameData().getBaseData().fake_speed * 60
-				let get_data = document.querySelector("#input-date").value;
-				let get_time = document.querySelector("#input-time").value;
-				let get_ms = document.querySelector("#input-ms").value;
+				let get_data = $("#input-date").val();
+				let get_time = $("#input-time").val();
+				let get_ms = $("#input-ms").val();
 				if (get_time.length <= 5){
 					get_time = get_time + ":00"; 
 				}
@@ -84,9 +82,9 @@ define("robotTW2/controllers/FakeController", [
 		}
 		, updateValuesSource = function(){
 			if(Object.keys($scope.villages_for_sent).length){
-				let get_data = document.querySelector("#input-date-source").value;
-				let get_time = document.querySelector("#input-time-source").value;
-				let get_ms = document.querySelector("#input-ms-source").value;
+				let get_data = $("#input-date-source").val();
+				let get_time = $("#input-time-source").val();
+				let get_ms = $("#input-ms-source").val();
 				if (get_time.length <= 5){
 					get_time = get_time + ":00"; 
 				}
@@ -183,7 +181,7 @@ define("robotTW2/controllers/FakeController", [
 			}
 
 			let object_scope = {
-					"element" 		: document.querySelector("#autocomplete_fake"),
+					"element" 		: $($("#autocomplete_fake")[0]),
 					"id" 			: "autocomplete_fake",
 					"autoComplete" 	: obj_autocomplete
 			}
@@ -201,7 +199,7 @@ define("robotTW2/controllers/FakeController", [
 			}
 
 			let object_scope = {
-					"element" 		: docdocument.querySelector("#autocomplete_fake_player"),
+					"element" 		: $($("#autocomplete_fake_player")[0]),
 					"id" 			: "autocomplete_fake_player",
 					"autoComplete" 	: obj_autocomplete
 			}
@@ -271,11 +269,11 @@ define("robotTW2/controllers/FakeController", [
 		$scope.removeCommand = services.FakeService.removeCommandAttackFake;
 
 		$scope.blur = function(){
-			var t = document.querySelector("#input-hour-interval").value;
+			var t = $("#input-hour-interval").val();
 			if(t.length <= 5) {
 				t = t + ":00"
 			}
-			$scope.data_fake.interval = unreadableSeconds(t) * 1000;
+			$scope.data_fake.interval = helper.unreadableSeconds(t) * 1000;
 		}
 
 		$scope.jumpToVillage = function(vid){
@@ -284,7 +282,7 @@ define("robotTW2/controllers/FakeController", [
 			if(!village){return}
 			let x = village.data.x
 			let y = village.data.y
-			services.$rootScope.$broadcast(providers.eventTypeProvider.MAP_SELECT_VILLAGE, village.getId());
+			services.villageService.setSelectedVillage(village)
 			services.mapService.jumpToVillage(x, y);
 			$scope.closeWindow();
 		}
@@ -293,7 +291,6 @@ define("robotTW2/controllers/FakeController", [
 			if(!vid){return}
 			let v = $scope.local_out_villages.find(f=>f.id==vid);
 			if(!v){return}
-			services.$rootScope.$broadcast(providers.eventTypeProvider.MAP_SELECT_VILLAGE, vid);
 			services.mapService.jumpToVillage(v.x, v.y);
 			$scope.closeWindow();
 		}

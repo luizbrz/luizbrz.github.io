@@ -2,14 +2,12 @@ define("robotTW2/controllers/SpyCompletionController", [
 	"robotTW2/services",
 	"robotTW2/time",
 	"helper/time",
-	"robotTW2/notify",
-	"robotTW2/unreadableSeconds"
+	"robotTW2/notify"
 	], function(
 			services,
 			time,
 			helper,
-			notify,
-			unreadableSeconds
+			notify
 	){
 	return function SpyCompletionController($scope) {
 		$scope.CLOSE = services.$filter("i18n")("CLOSE", services.$rootScope.loc.ale);
@@ -27,10 +25,10 @@ define("robotTW2/controllers/SpyCompletionController", [
 			if ($scope.availableSpies === 0 || $scope.option.length === 0 || $scope.rangeSlider.value === 0) {
 				return;
 			}
-			var durationInSeconds = unreadableSeconds($scope.duration);
-			var get_data = document.querySelector("#input-date").value;
-			var get_time = document.querySelector("#input-time").value;
-			var get_ms = document.querySelector("#input-ms").value;
+			var durationInSeconds = helper.unreadableSeconds($scope.duration);
+			var get_data = $("#input-date").val();
+			var get_time = $("#input-time").val();
+			var get_ms = $("#input-ms").val();
 			if (get_time.length <= 5){
 				get_time = get_time + ":00"; 
 			}

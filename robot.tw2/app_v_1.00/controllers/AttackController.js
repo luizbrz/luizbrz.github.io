@@ -80,7 +80,7 @@ define("robotTW2/controllers/AttackController", [
 			if(!village){return}
 			let x = village.data.x
 			let y = village.data.y
-			services.$rootScope.$broadcast(providers.eventTypeProvider.MAP_SELECT_VILLAGE, village.getId());
+			services.villageService.setSelectedVillage(village)
 			services.mapService.jumpToVillage(x, y);
 			$scope.closeWindow();
 		}
@@ -89,9 +89,24 @@ define("robotTW2/controllers/AttackController", [
 			if(!vid){return}
 			let v = $scope.local_out_villages.find(f=>f.id==vid);
 			if(!v){return}
-			services.$rootScope.$broadcast(providers.eventTypeProvider.MAP_SELECT_VILLAGE, vid);
 			services.mapService.jumpToVillage(v.x, v.y);
 			$scope.closeWindow();
+		}
+
+		$scope.getHoraSend = function(param){
+			return services.$filter("date")(new Date(param.data_escolhida - param.duration), "HH:mm:ss.sss");
+		}
+
+		$scope.getDataSend = function(param){
+			return services.$filter("date")(new Date(param.data_escolhida - param.duration), "dd/MM/yyyy");
+		}
+
+		$scope.getHoraAlvo = function(param){
+			return services.$filter("date")(new Date(param.data_escolhida), "HH:mm:ss.sss");
+		}
+
+		$scope.getDataAlvo = function(param){
+			return services.$filter("date")(new Date(param.data_escolhida), "dd/MM/yyyy");
 		}
 
 		$scope.getTimeRest = function(param){
@@ -121,7 +136,7 @@ define("robotTW2/controllers/AttackController", [
 
 		$scope.removeCommand = services.AttackService.removeCommandAttack;
 
-		$scope.$on(providers.eventTypeProvider.CHANGE_COMMANDS_ATTACK, function() {
+		$scope.$on(providers.eventTypeProvider.CHANGE_COMMANDS, function() {
 			update();
 		})
 

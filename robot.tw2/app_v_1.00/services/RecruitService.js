@@ -4,16 +4,14 @@ define("robotTW2/services/RecruitService", [
 	"robotTW2/conf",
 	"robotTW2/databases/data_log",
 	"robotTW2/databases/data_recruit",
-	"robotTW2/databases/data_villages",
-	"helper/format"
+	"robotTW2/databases/data_villages"
 	], function(
 			robotTW2,
 			time,
 			conf,
 			data_log,
 			data_recruit,
-			data_villages,
-			formatHelper
+			data_villages
 	){
 	return (function FarmService(
 			$rootScope,
@@ -28,9 +26,6 @@ define("robotTW2/services/RecruitService", [
 		var isInitialized = !1
 		, isRunning = !1
 		, isPaused = !1
-		, listener_resume = undefined
-		, paused_promise = undefined
-		, paused_queue = false
 		, promise_UnitsAndResources = undefined 
 		, queue_UnitsAndResources = []
 		, interval_recruit = null
@@ -110,7 +105,7 @@ define("robotTW2/services/RecruitService", [
 								res()
 								return
 							};
-
+							
 							if(!Object.keys(listGroups).length){
 								res()
 								return
@@ -132,7 +127,7 @@ define("robotTW2/services/RecruitService", [
 								res()
 								return
 							}
-
+							
 							Object.keys(grs_units).map(function(gr){
 								let min_resources = Math.trunc(
 										Math.min.apply(null, [
@@ -161,7 +156,7 @@ define("robotTW2/services/RecruitService", [
 
 									if (remaining <= 0) {
 										return nt()
-
+										
 									};
 									if (amount > remaining) {
 										amount = remaining;
@@ -177,12 +172,7 @@ define("robotTW2/services/RecruitService", [
 											"amount": amount
 									}
 
-									data_log.recruit.push(
-											{
-												"text":$filter("i18n")("recruit", $rootScope.loc.ale, "recruit") + " " + formatHelper.villageNameWithCoordinates(modelDataService.getVillage(village_id).data) + " " + amount + " " + unit_type, 
-												"date": time.convertedTime()
-											}
-									)
+									data_log.recruit.push({"text":$filter("i18n")("recruit", $rootScope.loc.ale, "recruit") + " - village_id " + village_id + " / unit_type " + unit_type, "date": (new Date(time.convertedTime())).toString()})
 									socketService.emit(providers.routeProvider.BARRACKS_RECRUIT, data_rec);
 									res()
 								} else {
@@ -193,39 +183,17 @@ define("robotTW2/services/RecruitService", [
 
 						}).then(function(){
 							promise_UnitsAndResources = undefined
-							if(isPaused){
-								typeof(listener_resume) == "function" ? listener_resume(): null;
-								listener_resume = undefined
-								listener_resume = $rootScope.$on(providers.eventTypeProvider.RESUME, function(){
-									if(queue_UnitsAndResources.length){
-										village_id = queue_UnitsAndResources.shift()
-										sec_promise(village_id)
-									}
-								})
-							} else {
-								if(queue_UnitsAndResources.length){
-									village_id = queue_UnitsAndResources.shift()
-									sec_promise(village_id)
-								}
+							if(queue_UnitsAndResources.length){
+								village_id = queue_UnitsAndResources.shift()
+								sec_promise(village_id)
 							}
 
 						}, function(data){
 							promise_UnitsAndResources = undefined
 							$rootScope.$broadcast(providers.eventTypeProvider.MESSAGE_DEBUG, {message: data.message});
-							if(isPaused){
-								typeof(listener_resume) == "function" ? listener_resume(): null;
-								listener_resume = undefined
-								listener_resume = $rootScope.$on(providers.eventTypeProvider.RESUME, function(){
-									if(queue_UnitsAndResources.length){
-										village_id = queue_UnitsAndResources.shift()
-										sec_promise(village_id)
-									}
-								})
-							} else {
-								if(queue_UnitsAndResources.length){
-									village_id = queue_UnitsAndResources.shift()
-									sec_promise(village_id)
-								}
+							if(queue_UnitsAndResources.length){
+								village_id = queue_UnitsAndResources.shift()
+								sec_promise(village_id)
 							}
 						})
 					} else {
@@ -275,11 +243,7 @@ define("robotTW2/services/RecruitService", [
 			if(callback && typeof(callback) == "function"){callback(t)}
 		}
 		, recruit = function(){
-			data_log.recruit.push({
-				"text":$filter("i18n")("init_cicles", $rootScope.loc.ale, "recruit"), 
-				"date": time.convertedTime()
-			}
-			)
+			data_log.recruit.push({"text":$filter("i18n")("init_cicles", $rootScope.loc.ale, "recruit"), "date": (new Date(time.convertedTime())).toString()})
 			var vls = modelDataService.getSelectedCharacter().getVillageList();
 			vls = Object.keys(vls).map(function(elem){
 				if(!data_villages.villages[vls[elem].getId()]){
@@ -338,51 +302,22 @@ define("robotTW2/services/RecruitService", [
 			list = []
 
 		}
-		, setPaused = function () {
-			if(!paused_promise){
-				paused_promise = new Promise(function(resolve, reject){
-					$timeout(function(){
-						resolve()	
-					}, 65000)
-				}). then(function(){
-					data_log.recruit.push(
-							{
-								"text": "Paused",
-								"date": time.convertedTime()
-							}
-					)
-					data_log.set()
-					isPaused = !0
-					paused_promise = undefined;
-					if(paused_queue){
-						paused_queue = false;
-						setPaused()
-					} else {
-						setResumed()
-					}
-				}, function(){
-					paused_promise = undefined;
-					setResumed()
-				})
-			} else {
-				paused_queue = true;
-			}
+		, pause = function (){
+			isPaused = !0
+			$rootScope.$broadcast(providers.eventTypeProvider.ISRUNNING_CHANGE, {name:"RECRUIT"})
 		}
-		, setResumed = function () {
-			data_log.recruit.push(
-					{
-						"text": "Resumed",
-						"date": time.convertedTime()
-					}
-			)
-			data_log.set()
+		, resume = function (){
 			isPaused = !1
-			$rootScope.$broadcast(providers.eventTypeProvider.RESUME)
+			$rootScope.$broadcast(providers.eventTypeProvider.ISRUNNING_CHANGE, {name:"RECRUIT"})
+			$rootScope.$broadcast(providers.eventTypeProvider.RESUME_CHANGE_RECRUIT)
 		}
+
 		return	{
 			init			: init,
 			start 			: start,
 			stop 			: stop,
+			pause 			: pause,
+			resume 			: resume,
 			isRunning		: function() {
 				return isRunning
 			},

@@ -15,7 +15,6 @@ define("robotTW2/services/DepositService", [
 			providers,
 			modelDataService,
 			$timeout,
-			$filter,
 			ready
 	) {
 
@@ -142,7 +141,6 @@ define("robotTW2/services/DepositService", [
 			robotTW2.providers,
 			robotTW2.services.modelDataService,
 			robotTW2.services.$timeout,
-			robotTW2.services.$filter,
 			robotTW2.ready
 	)
 })
